@@ -3,11 +3,27 @@ import EventCard from "@/components/EventCard";
 import { IEvent } from "@/database";
 import { cacheLife } from "next/cache";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+function getBaseUrl() {
+  // 1) explicit env (what you set in Vercel)
+  const envUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/$/, ""); // remove trailing slash
+  }
+
+  // 2) Vercel gives this but WITHOUT protocol
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    return `https://${vercelUrl}`;
+  }
+
+  // 3) local fallback
+  return "http://localhost:3000";
+}
 
 const Page = async () => {
   "use cache";
   cacheLife("hours");
+  const BASE_URL = getBaseUrl();
   const response = await fetch(`${BASE_URL}/api/events`);
   const { events } = await response.json();
 
