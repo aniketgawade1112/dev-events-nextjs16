@@ -1,7 +1,7 @@
-import connectDB from "@/lib/mongodb";
+import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 
-import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
 import Event from "@/database/event.model";
 
 export async function POST(req: NextRequest) {
@@ -23,15 +23,14 @@ export async function POST(req: NextRequest) {
 
     const file = formData.get("image") as File;
 
-    if (!file) {
+    if (!file)
       return NextResponse.json(
         { message: "Image file is required" },
         { status: 400 }
       );
-    }
 
-    let tags = JSON.parse(formData.get("tags") as string);
-    let agenda = JSON.parse(formData.get("agenda") as string);
+    const tags = JSON.parse(formData.get("tags") as string);
+    const agenda = JSON.parse(formData.get("agenda") as string);
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -39,10 +38,7 @@ export async function POST(req: NextRequest) {
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
-          {
-            resource_type: "image",
-            folder: "DevEvent",
-          },
+          { resource_type: "image", folder: "DevEvent" },
           (error, results) => {
             if (error) return reject(error);
 
@@ -54,17 +50,14 @@ export async function POST(req: NextRequest) {
 
     event.image = (uploadResult as { secure_url: string }).secure_url;
 
-    const createEvent = await Event.create({
+    const createdEvent = await Event.create({
       ...event,
       tags: tags,
       agenda: agenda,
     });
 
     return NextResponse.json(
-      {
-        message: "Event created successfully",
-        event: createEvent,
-      },
+      { message: "Event created successfully", event: createdEvent },
       { status: 201 }
     );
   } catch (e) {
@@ -83,13 +76,10 @@ export async function GET() {
   try {
     await connectDB();
 
-    const events = await Event.find().sort({ created: -1 });
+    const events = await Event.find().sort({ createdAt: -1 });
 
     return NextResponse.json(
-      {
-        message: "Events fetched successfully",
-        events,
-      },
+      { message: "Events fetched successfully", events },
       { status: 200 }
     );
   } catch (e) {
